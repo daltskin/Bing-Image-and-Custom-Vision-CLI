@@ -1,5 +1,5 @@
 # Custom Vision Model CLI - with image uploading, tagging and training
-Cross platform CLI to quickly provision a new Microsoft Custom Vision model using images stored on your local machine.  Images are automatically uploaded and tagged using folder names and the model is trained ready for predications.
+Cross platform CLI to provision a new Microsoft Custom Vision model using images stored on your local machine.  Images are automatically uploaded and tagged using folder names and the model is trained ready for predications.
 
 To learn more about Microsoft Cognitive Custom Vision Service, please see here: https://azure.microsoft.com/en-gb/services/cognitive-services/custom-vision-service/
 
