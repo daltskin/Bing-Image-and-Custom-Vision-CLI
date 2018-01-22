@@ -1,10 +1,10 @@
 # Bing Image CLI - Bing Image Search API Results - Image Downloader
-Cross platform CLI to quickly download images from Bing to your local machine using Microsoft Cognitive Services - Bing Image Search.  
+Cross platform CLI to download images from Bing to your local machine using Microsoft Cognitive Services - Bing Image Search.  
 
 For more details on usage see [Bing Image CLI](BingImageCLI/Readme.md)
 
 # Custom Vision Model CLI - with image uploading, tagging and training
-Cross platform CLI to quickly provision a new Microsoft Custom Vision model using images stored on your local machine. 
+Cross platform CLI to provision a new Microsoft Custom Vision model using images stored on your local machine. 
 
 For more details on usage see [Custom Vision CLI](CustomVisionCLI/Readme.md)
 
