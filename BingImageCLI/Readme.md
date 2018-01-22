@@ -19,20 +19,29 @@ To retrieve your Bing Image API key start here: https://azure.microsoft.com/en-g
 ## Usage
 
 ### Simple query
-BingImageSearch.exe -k *yourbingapikey* -s Clippy -p c:\\photos
+```
+BingImageSearch.exe -k *yourbingapikey* -s Clippy -p c:\photos
+```
 
 ### Multiple search terms query
-BingImageSearch.exe -k *yourbingapikey* -s "Microsoft Clippy, paperclip, office" -p c:\\photos
+```
+BingImageSearch.exe -k *yourbingapikey* -s "Microsoft Clippy, paperclip, office" -p c:\photos
+```
 
 ### Return first 50 results only
-BingImageSearch.exe -k *yourbingapikey* -s Clippy -p c:\\photos -m 50
+```
+BingImageSearch.exe -k *yourbingapikey* -s Clippy -p c:\photos -m 50
+```
 
 ### Return public licensed images only
-BingImageSearch.exe -k *yourbingapikey* -s Clippy -p c:\\photos -l Public
+```
+BingImageSearch.exe -k *yourbingapikey* -s Clippy -p c:\photos -l Public
+```
 
 ### Remove safe filter from results
-BingImageSearch.exe -k *yourbingapikey* -s Clippy -p c:\\photos -ss Off
-
+```
+BingImageSearch.exe -k *yourbingapikey* -s Clippy -p c:\photos -ss Off
+```
 
 
 
