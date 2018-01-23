@@ -57,13 +57,12 @@
                 Console.WriteLine($"Creating Custom Vision Project: {ProjectName}");
                 var project = trainingApi.CreateProject(ProjectName);
 
-                List<Tag> allTags = new List<Tag>();
-
                 Console.WriteLine($"Scanning subfolders within: {ImagePath}");
-                Parallel.ForEach(Directory.EnumerateDirectories(ImagePath), (currentFolder) =>
+                List<Tag> allTags = new List<Tag>();
+                foreach (var folder in Directory.EnumerateDirectories(ImagePath))
                 {
-                    string folderName = Path.GetFileName(currentFolder);
-                    var tagNames = folderName.Contains(",") ? folderName.Replace(" ", "").Split(',') : new string[] { folderName };
+                    string folderName = Path.GetFileName(folder);
+                    var tagNames = folderName.Contains(",") ? folderName.Split(',').Select(t => t.Trim()).ToArray() : new string[] { folderName };
 
                     // Create tag for each comma separated value in subfolder name
                     foreach (var tag in tagNames)
@@ -76,6 +75,12 @@
                             allTags.Add(imageTag);
                         }
                     }
+                }
+
+                Parallel.ForEach(Directory.EnumerateDirectories(ImagePath), (currentFolder) =>
+                {
+                    string folderName = Path.GetFileName(currentFolder);
+                    var tagNames = folderName.Contains(",") ? folderName.Replace(" ", "").Split(',') : new string[] { folderName };
 
                     try
                     {
