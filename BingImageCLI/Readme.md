@@ -8,11 +8,13 @@ To retrieve your Bing Image API key start here: https://azure.microsoft.com/en-g
 
 | Argument name | shortcut | default | values |
 |----|----|----|----|
-| BingUri | -u | https://api.cognitive.microsoft.com/bing/v7.0/images/search | |
+| BingUri | -u | https://api.cognitive.microsoft.com/bing/v7.0 | |
 | BingAPIKey | -k | | |
 | SearchTerm | -s | | |
 | DestintationPath | -p | | |
 | MaxResultCount | -m | 35 | 1-150 |
+| MaxFileSize | -fmax | | bytes |
+| MinFileSize | -fmin | | bytes |
 | Safe Search filter| -ss | Strict | Off, Moderate, Strict |
 |Licence | -l| | Any, Public, Share, ShareCommercially, Modify, ModifyCommercially, All |
 
@@ -43,7 +45,10 @@ BingImageCLI.exe -k *yourbingapikey* -s Clippy -p c:\photos -l Public
 BingImageCLI.exe -k *yourbingapikey* -s Clippy -p c:\photos -ss Off
 ```
 
-
+### Return images of between 1-4MB
+```
+BingImageCLI.exe -k *yourbingapikey* -s Clippy -p c:\photos -fmin 1000000 -fmax 4000000
+```
 
 
 

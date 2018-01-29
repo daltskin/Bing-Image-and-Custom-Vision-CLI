@@ -1,6 +1,7 @@
 ﻿namespace BingImageCLI
 {
-    using Newtonsoft.Json;
+    using Microsoft.Azure.CognitiveServices.Search.ImageSearch;
+    using Microsoft.Azure.CognitiveServices.Search.ImageSearch.Models;
     using PowerArgs;
     using System;
     using System.Collections.Generic;
@@ -27,15 +28,16 @@
 
     [ArgExceptionBehavior(ArgExceptionPolicy.StandardExceptionHandling)]
     [TabCompletion(HistoryToSave = 10)]
-    [ArgExample("BingImageSearch.exe -u https://api.cognitive.microsoft.com/bing/v7.0/images/search -k {yourbingapikey} -s Clippy -p c:\\photos -m 30 -l Public -ss Off", "using safe search filter", Title = "Override base uri, return max 30 results, public license images only, may return images with adult content")]
+    [ArgExample("BingImageSearch.exe -u https://api.cognitive.microsoft.com/bing/v7.0 -k {yourbingapikey} -s Clippy -p c:\\photos -m 30 -l Public -ss Off -fmin 1000000 -fmax 4000000", "using safe search filter", Title = "Override base uri, return max 30 results, public license images only, may return images with adult content, file size between 1-4MB")]
+    [ArgExample("BingImageSearch.exe -u https://api.cognitive.microsoft.com/bing/v7.0 -k {yourbingapikey} -s Clippy -p c:\\photos -m 30 -l Public -ss Off", "using safe search filter", Title = "Override base uri, return max 30 results, public license images only, may return images with adult content")]
     [ArgExample("BingImageSearch.exe -k {yourbingapikey} -s Clippy -p c:\\photos -m 30 -l Public -ss Off", "using safe search filter", Title = "Return max 30 results, public license images only, may return images with adult content")]
     [ArgExample("BingImageSearch.exe -k {yourbingapikey} -s Clippy -p c:\\photos -m 30 -l Public", "using license filter", Title = "Return max 30 results, public license images only")]
     [ArgExample("BingImageSearch.exe -k {yourbingapikey} -s Clippy -p c:\\photos -m 30", "using count filter", Title = "Return max 30 results")]
     [ArgExample("BingImageSearch.exe -k {yourbingapikey} -s Clippy -p c:\\photos", "using arguments", Title = "Simple query")]
     public class BingImageSearch
     {
-        [DefaultValue("https://api.cognitive.microsoft.com/bing/v7.0/images/search")]
-        [ArgDescription("Bing Uri Base: eg. https://api.cognitive.microsoft.com/bing/v7.0/images/search")]
+        [DefaultValue("https://api.cognitive.microsoft.com/bing/v7.0")]
+        [ArgDescription("Bing Uri Base: eg. https://api.cognitive.microsoft.com/bing/v7.0")]
         [ArgShortcut("-u")]
         public string BingUri { get; set; }
 
@@ -61,6 +63,14 @@
         [ArgShortcut("-m")]
         public int MaxResultCount { get; set; }
 
+        [ArgDescription("Maximum files size of images (bytes)")]
+        [ArgShortcut("-fmax")]
+        public long MaxFileSize { get; set; }
+
+        [ArgDescription("Minimum files size of images (bytes)")]
+        [ArgShortcut("-fmin")]
+        public long MinFileSize { get; set; }
+
         [ArgumentAwareTabCompletion(typeof(SafeSearchTabCompletionSource))]
         [DefaultValue("Strict")]
         [ArgDescription("Safe Search Filter")]
@@ -78,67 +88,44 @@
         public async Task Main()
         {
             Console.WriteLine("Searching Bing images for: " + SearchTerm);
-            var result = await GetBingSearchResult(BingUri, BingAPIKey, SearchTerm, MaxResultCount, SafeSearch, License);
-            if (result != null)
+            var client = new ImageSearchAPI(new ApiKeyServiceClientCredentials(BingAPIKey));
+            client.BaseUri = new Uri(BingUri);
+            var images = await client.Images.SearchAsync(query: SearchTerm, count: MaxResultCount, maxFileSize: MaxFileSize, minFileSize: MinFileSize, license: License, safeSearch: SafeSearch);
+            if (images != null)
             {
-                Console.WriteLine($"{result?.value.Length ?? 0} images found");
+                Console.WriteLine($"{images.Value.Count} images found");
                 string path = $"{DestinationPath}\\{SearchTerm}";
-
-                var savedImageCount = await SaveBingSearchImages(result, path);
+                var savedImageCount = await SaveBingSearchImages(images.Value, path);
                 Console.WriteLine($"{savedImageCount} images saved");
             }
         }
 
-        private async Task<BingSearchResult> GetBingSearchResult(string uriBase, string apiKey, string searchQuery, int maxResultCount, string safeSearch, string license)
-        {
-            HttpClient httpClient = new HttpClient();
-
-            var uriQuery = $"{uriBase}?q={Uri.EscapeDataString(searchQuery)}&count={maxResultCount}&safesearch={safeSearch}&license={license}";
-            var httpRequest = new HttpRequestMessage(HttpMethod.Get, uriQuery);
-            httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
-
-            try
-            {
-                using (HttpResponseMessage response = await httpClient.SendAsync(httpRequest))
-                {
-                    response.EnsureSuccessStatusCode();
-                    string resp = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<BingSearchResult>(resp);
-                }
-            }
-            catch (Exception exp)
-            {
-                Console.WriteLine($"Error calling Bing Search API (check your key): {exp.Message}");
-                return null;
-            }
-        }
-
-        private async Task<int> SaveBingSearchImages(BingSearchResult results, string targetFolder)
+        private async Task<int> SaveBingSearchImages(IList<ImageObject> results, string targetFolder)
         {
             Directory.CreateDirectory(targetFolder);
             HttpClient httpClient = new HttpClient();
 
-            List<Task> taskList = new List<Task>();
+            List <Task> taskList = new List<Task>();
             int savedCount = 0;
-            foreach (var item in results.value)
+            foreach (var item in results)
             {
                 var task = Task.Run(async () =>
                 {
                     try
                     {
-                        var httpRequest = new HttpRequestMessage(HttpMethod.Get, item.contentUrl);
+                        var httpRequest = new HttpRequestMessage(HttpMethod.Get, item.ContentUrl);
                         var response = await httpClient.SendAsync(httpRequest);
                         response.EnsureSuccessStatusCode();
                         var stream = await response.Content.ReadAsStreamAsync();
 
                         var img = Image.FromStream(stream);
-                        string filePath = $"{targetFolder}\\{item.imageId}.jpg";
+                        string filePath = $"{targetFolder}\\{item.ImageId}.jpg";
                         img.Save(filePath);
                         savedCount++;
                     }
                     catch (Exception exp)
                     {
-                        Console.WriteLine($"Error downloading: {item.contentUrl} Error: {exp.Message}");
+                        Console.WriteLine($"Error downloading: {item.ContentUrl} Error: {exp.Message}");
                     }
                 });
                 taskList.Add(task);
