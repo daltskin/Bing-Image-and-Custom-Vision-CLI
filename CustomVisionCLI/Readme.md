@@ -13,6 +13,7 @@ To retrieve your Custom Vision API key start here: https://azure.microsoft.com/e
 | CustomVisionAPIKey | -k | asdfasdfasdfsaf |
 | ProjectName | -n | PaperclipOrClippy | 
 | ImagePath | -p | c:\photos |
+| Timeout (minutes) | -t | 10 |
 | QuickTest | -q | |
 
 ## Usage

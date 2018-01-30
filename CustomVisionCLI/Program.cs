@@ -1,12 +1,13 @@
 ﻿namespace CustomVisionCLI
 {
     using PowerArgs;
+    using System.Threading.Tasks;
 
     public class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            Args.InvokeMain<CustomVision>(args);
+            await Args.InvokeMainAsync<CustomVision>(args);
         }
     }
 }

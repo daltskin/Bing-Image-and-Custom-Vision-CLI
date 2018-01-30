@@ -44,7 +44,7 @@
         [HelpHook]
         public bool Help { get; set; }
 
-        public void Main()
+        public async Task Main()
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -77,48 +77,64 @@
                     }
                 }
 
-                Parallel.ForEach(Directory.EnumerateDirectories(ImagePath), (currentFolder) =>
+                foreach (var currentFolder in Directory.EnumerateDirectories(ImagePath))
                 {
                     string folderName = Path.GetFileName(currentFolder);
-                    var tagNames = folderName.Contains(",") ? folderName.Replace(" ", "").Split(',') : new string[] { folderName };
+                    var tagNames = folderName.Contains(",") ? folderName.Split(',').Select(t => t.Trim()).ToArray() : new string[] { folderName };
 
                     try
                     {
                         // Load the images to be uploaded from disk into memory
                         Console.WriteLine($"Uploading: {ImagePath}\\{folderName} images...");
-                        var images = Directory.GetFiles(currentFolder).Select(f => new MemoryStream(File.ReadAllBytes(f))).ToList();
 
-                        // More reliable to upload individually than via batch for some reason
-                        Parallel.ForEach(images, (image) =>
+                        var images = Directory.GetFiles(currentFolder).ToList();
+                        var folderTags = allTags.Where(t => tagNames.Contains(t.Name)).Select(t => t.Id).ToList();
+                        var imageFiles = images.Select(img => new ImageFileCreateEntry(Path.GetFileName(img), File.ReadAllBytes(img), folderTags)).ToList();
+                        var imageBatch = new ImageFileCreateBatch(imageFiles);
+                        var summary = await trainingApi.CreateImagesFromFilesAsync(project.Id, new ImageFileCreateBatch(imageFiles));
+
+                        // List any images that didn't make it
+                        foreach (var imageResult in summary.Images.Where(i => !i.Status.Equals("OK")))
                         {
-                            trainingApi.CreateImagesFromData(project.Id, image, allTags.Where(t => tagNames.Contains(t.Name)).Select(t => t.Id.ToString()).ToList());
-                        });
+                            Console.WriteLine($"{ImagePath}\\{folderName}\\{imageResult.SourceUrl}: {imageResult.Status}");
+                        }
+
+                        Console.WriteLine($"Uploaded {summary.Images.Where(i => i.Status.Equals("OK")).Count()}/{images.Count()} images successfully from {ImagePath}\\{folderName}");
+
                     }
                     catch (Exception exp)
                     {
-                        Console.WriteLine($"Error uploading: {exp.Message}");
+                        Console.WriteLine($"Error processing {currentFolder}: {exp.Source}:{exp.Message}");
                     }
-                });
-
-                // Train CV model and set iteration to the default
-                Console.WriteLine($"Training model");
-                var iteration = trainingApi.TrainProject(project.Id);
-                while (iteration.Status.Equals("Training"))
-                {
-                    Thread.Sleep(1000);
-                    iteration = trainingApi.GetIteration(project.Id, iteration.Id);
-                    Console.WriteLine($"Model status: {iteration.Status}");
                 }
 
-                if (iteration.Status.Equals("Completed"))
+                try
                 {
-                    iteration.IsDefault = true;
-                    trainingApi.UpdateIteration(project.Id, iteration.Id, iteration);
-                    Console.WriteLine($"Iteration: {iteration.Id} set as default");
+                    // Train CV model and set iteration to the default
+                    Console.WriteLine($"Training model");
+                    var iteration = trainingApi.TrainProject(project.Id);
+                    while (iteration.Status.Equals("Training"))
+                    {
+                        Thread.Sleep(1000);
+                        iteration = trainingApi.GetIteration(project.Id, iteration.Id);
+                        Console.WriteLine($"Model status: {iteration.Status}");
+                    }
+
+                    if (iteration.Status.Equals("Completed"))
+                    {
+                        iteration.IsDefault = true;
+                        trainingApi.UpdateIteration(project.Id, iteration.Id, iteration);
+                        Console.WriteLine($"Iteration: {iteration.Id} set as default");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Iteration status: {iteration.Status}");
+                    }
                 }
-                else
+                catch (Exception exp)
                 {
-                    Console.WriteLine($"Iteration status: {iteration.Status}");
+                    Console.WriteLine($"Error training model (check you have at least 5 images per tag and 2 tags)");
+                    Console.WriteLine($"Error {exp.Source}: {exp.Message}");
                 }
             }
             else
@@ -145,13 +161,13 @@
                 // Get the default iteration to test against and check results
                 var iterations = trainingApi.GetIterations(project.Id);
                 var image = new MemoryStream(File.ReadAllBytes(ImagePath));
-                var result = trainingApi.QuickTestImage(project.Id, image, iterations.Where(i=> i.IsDefault == true).FirstOrDefault().Id);
+                var result = trainingApi.QuickTestImage(project.Id, image, iterations.Where(i => i.IsDefault == true).FirstOrDefault().Id);
                 foreach (var prediction in result.Predictions)
                 {
                     Console.WriteLine($"Tag: {prediction.Tag} Probability: {prediction.Probability}");
                 }
             }
-            
+
             // fin
             stopwatch.Stop();
             Console.WriteLine($"Done.");
