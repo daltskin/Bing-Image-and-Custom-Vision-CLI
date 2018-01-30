@@ -158,10 +158,18 @@
                     return;
                 }
 
+                var image = new MemoryStream(File.ReadAllBytes(ImagePath));
+
                 // Get the default iteration to test against and check results
                 var iterations = trainingApi.GetIterations(project.Id);
-                var image = new MemoryStream(File.ReadAllBytes(ImagePath));
-                var result = trainingApi.QuickTestImage(project.Id, image, iterations.Where(i => i.IsDefault == true).FirstOrDefault().Id);
+                var defaultIteration = iterations.Where(i => i.IsDefault == true).FirstOrDefault();
+                if (defaultIteration == null)
+                {
+                    Console.WriteLine($"No default iteration has been set");
+                    return;
+                }
+
+                var result = trainingApi.QuickTestImage(project.Id, image, defaultIteration.Id);
                 foreach (var prediction in result.Predictions)
                 {
                     Console.WriteLine($"Tag: {prediction.Tag} Probability: {prediction.Probability}");
