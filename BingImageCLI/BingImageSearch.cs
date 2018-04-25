@@ -78,6 +78,7 @@
         public string SafeSearch { get; set; }
 
         [ArgumentAwareTabCompletion(typeof(LicenseTabCompletionSource))]
+        [DefaultValue("All")]
         [ArgRequired(PromptIfMissing = true)]
         [ArgShortcut("-l")]
         public string License { get; set; }
