@@ -14,7 +14,7 @@ To retrieve your Bing Image API key start here: https://docs.microsoft.com/en-us
 | MaxResultCount | -m | 35 | 1-150 |
 | Size | -s | All | Small, Medium, Large, Wallpaper, All |
 | Safe Search filter| -ss | Strict | Off, Moderate, Strict |
-| Licence | -l| | Any, Public, Share, ShareCommercially, Modify, ModifyCommercially, All |
+| Licence | -l| All | Any, Public, Share, ShareCommercially, Modify, ModifyCommercially, All |
 
 ## Usage
 
