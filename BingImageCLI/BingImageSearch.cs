@@ -35,12 +35,12 @@
 
     [ArgExceptionBehavior(ArgExceptionPolicy.StandardExceptionHandling)]
     [TabCompletion(HistoryToSave = 10)]
-    [ArgExample("BingImageSearch.exe -u https://api.bing.microsoft.com/v7.0/images/search -k {yourbingapikey} -q Clippy -p c:\\photos -m 30 -l Public -s Large", "using safe search filter", Title = "Override base uri, return max 30 results, public license images only, safe search, Large (500x500) or bigger images")]
-    [ArgExample("BingImageSearch.exe -u https://api.bing.microsoft.com/v7.0/images/search -k {yourbingapikey} -q Clippy -p c:\\photos -m 30 -l Public -ss Off", "using safe search filter", Title = "Override base uri, return max 30 results, public license images only, may return images with adult content")]
-    [ArgExample("BingImageSearch.exe -k {yourbingapikey} -q Clippy -p c:\\photos -m 30 -l Public -ss Off", "using safe search filter", Title = "Return max 30 results, public license images only, may return images with adult content")]
-    [ArgExample("BingImageSearch.exe -k {yourbingapikey} -q Clippy -p c:\\photos -m 30 -l Public", "using license filter", Title = "Return max 30 results, public license images only")]
-    [ArgExample("BingImageSearch.exe -k {yourbingapikey} -q Clippy -p c:\\photos -m 30", "using count filter", Title = "Return max 30 results")]
-    [ArgExample("BingImageSearch.exe -k {yourbingapikey} -q Clippy -p c:\\photos", "using arguments", Title = "Simple query")]
+    [ArgExample("BingImageSearch.exe -u https://api.bing.microsoft.com/v7.0/images/search -k {yourbingapikey} -q Clippy -m 30 -l Public -s Large", "using safe search filter", Title = "Override base uri, return max 30 results, public license images only, safe search, Large (500x500) or bigger images")]
+    [ArgExample("BingImageSearch.exe -u https://api.bing.microsoft.com/v7.0/images/search -k {yourbingapikey} -q Clippy -m 30 -l Public -ss Off", "using safe search filter", Title = "Override base uri, return max 30 results, public license images only, may return images with adult content")]
+    [ArgExample("BingImageSearch.exe -k {yourbingapikey} -q Clippy -m 30 -l Public -ss Off", "using safe search filter", Title = "Return max 30 results, public license images only, may return images with adult content")]
+    [ArgExample("BingImageSearch.exe -k {yourbingapikey} -q Clippy -m 30 -l Public", "using license filter", Title = "Return max 30 results, public license images only")]
+    [ArgExample("BingImageSearch.exe -k {yourbingapikey} -q Clippy -m 30", "using count filter", Title = "Return max 30 results")]
+    [ArgExample("BingImageSearch.exe -k {yourbingapikey} -q Clippy", "using arguments", Title = "Simple query")]
     public class BingImageSearch
     {
         [DefaultValue("https://api.bing.microsoft.com/v7.0/images/search")]
@@ -57,11 +57,6 @@
         [ArgDescription("Bing search term/query")]
         [ArgShortcut("-q")]
         public string SearchTerm { get; set; }
-
-        [ArgRequired(PromptIfMissing = true)]
-        [ArgDescription("Directory path to save results to")]
-        [ArgShortcut("-p")]
-        public string DestinationPath { get; set; }
 
         // https://docs.microsoft.com/en-us/rest/api/cognitiveservices-bingsearch/bing-images-api-v7-reference
         [DefaultValue(35)]
@@ -113,7 +108,7 @@
 
             if (bingResponse.value != null)
             {
-                string path = $"{DestinationPath}\\{SearchTerm}";
+                string path = $"{Directory.GetCurrentDirectory()}/{SearchTerm}";
                 var (savedImageCount, errorCount) = await SaveBingSearchImages(bingResponse, path);
                 Console.WriteLine($"{savedImageCount} images saved ({errorCount} errors)");
             }
@@ -137,11 +132,11 @@
                         var response = await httpClient.SendAsync(httpRequest);
                         response.EnsureSuccessStatusCode();
                         var content = await response.Content.ReadAsByteArrayAsync();
-                        string filePath = $"{targetFolder}\\{item.imageId}.{item.encodingFormat}";
+                        string filePath = $"{targetFolder}/{item.imageId}.{item.encodingFormat}";
                         await File.WriteAllBytesAsync(filePath, content);
                         savedCount++;
                     }
-                    catch (Exception exp)
+                    catch (Exception)
                     {
                         errorCount++;
                         Console.WriteLine($"Error downloading: {item.contentUrl}");
