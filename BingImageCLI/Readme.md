@@ -1,4 +1,4 @@
-# Bing Image CLI - Bing Image Search API Results - Image Downloader
+# Bing Image Downloader CLI
 Download images from Bing to your local machine using Bing Search APIs - [Bing Image Search](https://docs.microsoft.com/en-us/azure/cognitive-services/Bing-Image-Search/overview).  For documentation on the underlying API see: https://docs.microsoft.com/en-us/rest/api/cognitiveservices-bingsearch/bing-images-api-v7-reference
 
 ## Bing Image API Key
